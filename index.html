@@ -4,10 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>WOLF ALPHA 2.0</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Oswald:wght@400;500;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
@@ -31,20 +29,952 @@
             }
         }
     </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Oswald:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
     <style>
-        body {
-            background-color: #0c0a09;
-            color: #e7e5e4;
-            font-family: 'Inter', sans-serif;
-            overscroll-behavior: none;
-            -webkit-tap-highlight-color: transparent;
-        }
+        body { background-color: #0c0a09; color: #e7e5e4; font-family: 'Inter', sans-serif; overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body>
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
+
+    <script type="text/babel" data-presets="react,typescript">
+        const { useState, useEffect, useRef } = React;
+
+        // --- ICONS (Inline SVGs to prevent loading errors) ---
+        const Icon = ({ children, size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
+        );
+        const Check = (p) => <Icon {...p}><polyline points="20 6 9 17 4 12"/></Icon>;
+        const ChevronRight = (p) => <Icon {...p}><polyline points="9 18 15 12 9 6"/></Icon>;
+        const X = (p) => <Icon {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></Icon>;
+        const Plus = (p) => <Icon {...p}><path d="M5 12h14"/><path d="M12 5v14"/></Icon>;
+        const Scale = (p) => <Icon {...p}><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></Icon>;
+        const Settings = (p) => <Icon {...p}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></Icon>;
+        const Play = (p) => <Icon {...p}><polygon points="5 3 19 12 5 21 5 3"/></Icon>;
+        const Pause = (p) => <Icon {...p}><rect width="4" height="16" x="6" y="4"/><rect width="4" height="16" x="14" y="4"/></Icon>;
+        const RotateCcw = (p) => <Icon {...p}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 12"/><path d="M3 3v9h9"/></Icon>;
+        const Flag = (p) => <Icon {...p}><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></Icon>;
+        const Calendar = (p) => <Icon {...p}><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></Icon>;
+        const Clock = (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></Icon>;
+        const BarChart2 = (p) => <Icon {...p}><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></Icon>;
+        const List = (p) => <Icon {...p}><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></Icon>;
+        const CheckSquare = (p) => <Icon {...p}><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></Icon>;
+
+        // --- CONSTANTS ---
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxx2iCp9PgKa2XcY_zZuhvCjN0BeCrthAa93OjHPNDpRr9zXgozhpKi9zZcoEfjGHl6/exec";
+        const defaultRoutines = {
+            'Wake Up': [
+                { type: 'work', name: 'Bounce & Breathe', duration: 60 },
+                { type: 'rep_work', name: 'Shoulder Pinches', exercises: ['10 Reps'] },
+                { type: 'rep_work', name: 'Arm Circles', exercises: ['10 Fwd / 10 Bwd'] },
+                { type: 'rep_work', name: 'RDL', duration: 30, exercises: ['10 Reps'] },
+                { type: 'rep_work', name: 'Single Leg RDL', duration: 30, exercises: ['10 Reps total'] },
+                { type: 'rep_work', name: 'Inchworm', duration: 30, exercises: ['5 Reps'] },
+                { type: 'rep_work', name: 'Hip Bridges', exercises: ['10 Reps + Hold'] },
+                { type: 'rep_work', name: 'Windshield Wipers', exercises: ['10 Reps'] },
+                { type: 'rep_work', name: 'Leg Hug, Point/Flex (R)', duration: 30, exercises: ['10 Reps'] },
+                { type: 'rep_work', name: 'Leg Hug, Point/Flex (L)', duration: 30, exercises: ['10 Reps'] },
+                { type: 'rep_work', name: 'Cat-Cow', duration: 30, exercises: ['10 Reps'] },
+                { type: 'rep_work', name: 'Bird Dogs', duration: 30, exercises: ['10 Reps'] },
+                { type: 'work', name: "Child's Pose", duration: 60 }
+            ],
+            'Morning Workout': [
+                { type: 'work', name: 'Push-ups', round: '1/4', duration: 10 }, { type: 'rest', name: 'Rest', duration: 10 },
+                { type: 'work', name: 'Push-ups', round: '2/4', duration: 10 }, { type: 'rest', name: 'Rest', duration: 10 },
+                { type: 'work', name: 'Push-ups', round: '3/4', duration: 10 }, { type: 'rest', name: 'Rest', duration: 10 },
+                { type: 'work', name: 'Push-ups', round: '4/4', duration: 10 }, { type: 'rest', name: 'Switch', duration: 30 },
+                { type: 'work', name: 'Air Squats', round: '1/4', duration: 10 }, { type: 'rest', name: 'Rest', duration: 10 },
+                { type: 'work', name: 'Air Squats', round: '2/4', duration: 10 }, { type: 'rest', name: 'Rest', duration: 10 },
+                { type: 'work', name: 'Air Squats', round: '3/4', duration: 10 }, { type: 'rest', name: 'Rest', duration: 10 },
+                { type: 'work', name: 'Air Squats', round: '4/4', duration: 10 }, { type: 'rest', name: 'Switch', duration: 30 },
+                { type: 'work', name: 'Burpees', round: '1/4', duration: 10 }, { type: 'rest', name: 'Rest', duration: 10 },
+                { type: 'work', name: 'Burpees', round: '2/4', duration: 10 }, { type: 'rest', name: 'Rest', duration: 10 },
+                { type: 'work', name: 'Burpees', round: '3/4', duration: 10 }, { type: 'rest', name: 'Rest', duration: 10 },
+                { type: 'work', name: 'Burpees', round: '4/4', duration: 10 }, { type: 'rest', name: 'Switch', duration: 30 },
+                { type: 'work', name: 'Mountain Climbers', duration: 10 }, { type: 'rest', name: 'Rest', duration: 10 },
+                { type: 'work', name: 'Mountain Climbers', duration: 10 }, { type: 'rest', name: 'Rest', duration: 10 },
+                { type: 'work', name: 'Mountain Climbers', duration: 10 }, { type: 'rest', name: 'Rest', duration: 10 },
+                { type: 'work', name: 'Mountain Climbers', duration: 10 }
+            ],
+            'Cooldown Flow': [
+                { type: 'cooldown', name: 'Lizard (R)', duration: 30 }, { type: 'rest', name: 'Rest', duration: 10 },
+                { type: 'cooldown', name: 'Lunge (R)', duration: 30 }, { type: 'rest', name: 'Rest', duration: 10 },
+                { type: 'cooldown', name: 'Lizard (L)', duration: 30 }, { type: 'rest', name: 'Rest', duration: 10 },
+                { type: 'cooldown', name: 'Lunge (L)', duration: 30 }, { type: 'rest', name: 'Rest', duration: 10 },
+                { type: 'cooldown', name: 'Elevated Pigeon (R)', duration: 30 }, { type: 'rest', name: 'Rest', duration: 10 },
+                { type: 'cooldown', name: 'Elevated Pigeon (L)', duration: 30 }, { type: 'rest', name: 'Rest', duration: 10 },
+                { type: 'cooldown', name: 'Pec Stretch (R)', duration: 30 }, { type: 'rest', name: 'Rest', duration: 10 },
+                { type: 'cooldown', name: 'Pec Stretch (L)', duration: 30 }, { type: 'rest', name: 'Rest', duration: 10 },
+                { type: 'cooldown', name: 'Warrior Pose (R)', duration: 45 }, { type: 'rest', name: 'Rest', duration: 10 },
+                { type: 'cooldown', name: 'Warrior Pose (L)', duration: 45 }, { type: 'rest', name: 'Rest', duration: 10 },
+                { type: 'cooldown', name: 'Meditate', duration: 180 }
+            ],
+            'Garage Games': [
+                { type: "amrap", name: "AMRAP 20", duration: 1200, round: "Garage Games", exercises: ["10 Med Ball Cleans", "10 Pull-Ups", "40 Double Unders"] }
+            ],
+            'Pop-Eye': [
+                { type: 'work', name: 'Suitcase Hold (R)', round: '1/6', duration: 60 }, { type: 'rest', name: 'Rest', duration: 5 },
+                { type: 'work', name: 'Suitcase Hold (L)', round: '2/6', duration: 60 }, { type: 'rest', name: 'Rest', duration: 5 },
+                { type: 'work', name: 'Suitcase Hold (R)', round: '3/6', duration: 60 }, { type: 'rest', name: 'Rest', duration: 5 },
+                { type: 'work', name: 'Suitcase Hold (L)', round: '4/6', duration: 60 }, { type: 'rest', name: 'Rest', duration: 5 },
+                { type: 'work', name: 'Suitcase Hold (R)', round: '5/6', duration: 60 }, { type: 'rest', name: 'Rest', duration: 5 },
+                { type: 'work', name: 'Suitcase Hold (L)', round: '6/6', duration: 60 }, { type: 'rest', name: 'Rest', duration: 5 },
+                { type: 'rep_work', name: 'KB Flips (Pyramid)', exercises: ['10, 20, 30, 40, 50, 40, 30, 20, 10'] }
+            ],
+            'The Afterburner': [
+                { type: 'rep_work', name: 'Warmup: High Knees', duration: 30, exercises: ['30 Seconds'] },
+                { type: 'rep_work', name: 'Warmup: Butt Kicks', duration: 30, exercises: ['30 Seconds'] },
+                { type: 'rep_work', name: 'Warmup: Walking Lunges', duration: 60, exercises: ['60 Seconds'] },
+                { type: 'rep_work', name: 'Warmup: A-Skips', duration: 60, exercises: ['60 Seconds'] },
+                { type: 'rest', name: 'Get Ready', duration: 60 },
+                { type: 'rep_work', name: 'Sprint 100m', round: '1/10', exercises: ['95% Effort (or 20s Jump Rope)'] }, { type: 'rest', name: 'Recover', duration: 90 },
+                { type: 'rep_work', name: 'Sprint 100m', round: '2/10', exercises: ['95% Effort (or 20s Jump Rope)'] }, { type: 'rest', name: 'Recover', duration: 90 },
+                { type: 'rep_work', name: 'Sprint 100m', round: '3/10', exercises: ['95% Effort (or 20s Jump Rope)'] }, { type: 'rest', name: 'Recover', duration: 90 },
+                { type: 'rep_work', name: 'Sprint 100m', round: '4/10', exercises: ['95% Effort (or 20s Jump Rope)'] }, { type: 'rest', name: 'Recover', duration: 90 },
+                { type: 'rep_work', name: 'Sprint 100m', round: '5/10', exercises: ['95% Effort (or 20s Jump Rope)'] }, { type: 'rest', name: 'Recover', duration: 90 },
+                { type: 'rep_work', name: 'Sprint 100m', round: '6/10', exercises: ['95% Effort (or 20s Jump Rope)'] }, { type: 'rest', name: 'Recover', duration: 90 },
+                { type: 'rep_work', name: 'Sprint 100m', round: '7/10', exercises: ['95% Effort (or 20s Jump Rope)'] }, { type: 'rest', name: 'Recover', duration: 90 },
+                { type: 'rep_work', name: 'Sprint 100m', round: '8/10', exercises: ['95% Effort (or 20s Jump Rope)'] }, { type: 'rest', name: 'Recover', duration: 90 },
+                { type: 'rep_work', name: 'Sprint 100m', round: '9/10', exercises: ['95% Effort (or 20s Jump Rope)'] }, { type: 'rest', name: 'Recover', duration: 90 },
+                { type: 'rep_work', name: 'Sprint 100m', round: '10/10', exercises: ['ALL OUT EFFORT'] }
+            ],
+            'Time Under Tension': [
+                { type: 'rep_work', name: 'A1. Split Squat (R/L)', round: 'Set 1/3', exercises: ['10-12 Reps (3 sec down)'] },
+                { type: 'rep_work', name: 'A2. Banded Push-Up', round: 'Set 1/3', exercises: ['Failure (3 sec down)'] }, { type: 'rest', name: 'Rest', duration: 60 },
+                { type: 'rep_work', name: 'A1. Split Squat (R/L)', round: 'Set 2/3', exercises: ['10-12 Reps (3 sec down)'] },
+                { type: 'rep_work', name: 'A2. Banded Push-Up', round: 'Set 2/3', exercises: ['Failure (3 sec down)'] }, { type: 'rest', name: 'Rest', duration: 60 },
+                { type: 'rep_work', name: 'A1. Split Squat (R/L)', round: 'Set 3/3', exercises: ['10-12 Reps (3 sec down)'] },
+                { type: 'rep_work', name: 'A2. Banded Push-Up', round: 'Set 3/3', exercises: ['Failure (3 sec down)'] }, { type: 'rest', name: 'Transition', duration: 60 },
+                { type: 'rep_work', name: 'B1. Chin-Ups', round: 'Set 1/3', exercises: ['Near Failure (3 sec down)'] },
+                { type: 'rep_work', name: 'B2. Single Leg RDL', round: 'Set 1/3', exercises: ['12 Reps (3 sec down)'] }, { type: 'rest', name: 'Rest', duration: 60 },
+                { type: 'rep_work', name: 'B1. Chin-Ups', round: 'Set 2/3', exercises: ['Near Failure (3 sec down)'] },
+                { type: 'rep_work', name: 'B2. Single Leg RDL', round: 'Set 2/3', exercises: ['12 Reps (3 sec down)'] }, { type: 'rest', name: 'Rest', duration: 60 },
+                { type: 'rep_work', name: 'B1. Chin-Ups', round: 'Set 3/3', exercises: ['Near Failure (3 sec down)'] },
+                { type: 'rep_work', name: 'B2. Single Leg RDL', round: 'Set 3/3', exercises: ['12 Reps (3 sec down)'] }, { type: 'rest', name: 'Transition', duration: 60 },
+                { type: 'rep_work', name: 'Finisher: DB Flyes', round: 'Max Effort', exercises: ['Failure (Stretch Focus)'] }
+            ],
+            'Core Crusher': [
+                { type: 'work', name: 'Ab Wheel Rollout', round: '1/3', duration: 40 }, { type: 'rest', name: 'Rest', duration: 20 },
+                { type: 'work', name: 'Laying Leg Lifts', round: '1/3', duration: 40 }, { type: 'rest', name: 'Rest', duration: 20 },
+                { type: 'work', name: 'RKC Plank', round: '1/3', duration: 40 }, { type: 'rest', name: 'Rest', duration: 20 },
+                { type: 'work', name: 'Side Plank (R)', round: '1/3', duration: 40 }, { type: 'rest', name: 'Rest', duration: 20 },
+                { type: 'work', name: 'Side Plank (L)', round: '1/3', duration: 40 }, { type: 'rest', name: 'Rest', duration: 20 },
+                { type: 'work', name: 'Ab Wheel Rollout', round: '2/3', duration: 40 }, { type: 'rest', name: 'Rest', duration: 20 },
+                { type: 'work', name: 'Laying Leg Lifts', round: '2/3', duration: 40 }, { type: 'rest', name: 'Rest', duration: 20 },
+                { type: 'work', name: 'RKC Plank', round: '2/3', duration: 40 }, { type: 'rest', name: 'Rest', duration: 20 },
+                { type: 'work', name: 'Side Plank (R)', round: '2/3', duration: 40 }, { type: 'rest', name: 'Rest', duration: 20 },
+                { type: 'work', name: 'Side Plank (L)', round: '2/3', duration: 40 }, { type: 'rest', name: 'Rest', duration: 20 },
+                { type: 'work', name: 'Ab Wheel Rollout', round: '3/3', duration: 40 }, { type: 'rest', name: 'Rest', duration: 20 },
+                { type: 'work', name: 'Laying Leg Lifts', round: '3/3', duration: 40 }, { type: 'rest', name: 'Rest', duration: 20 },
+                { type: 'work', name: 'RKC Plank', round: '3/3', duration: 40 }, { type: 'rest', name: 'Rest', duration: 20 },
+                { type: 'work', name: 'Side Plank (R)', round: '3/3', duration: 40 }, { type: 'rest', name: 'Rest', duration: 20 },
+                { type: 'work', name: 'Side Plank (L)', round: '3/3', duration: 40 }, { type: 'rest', name: 'Rest', duration: 20 }
+            ],
+            'Monday Protocol': [
+                { type: "amrap", name: "AMRAP 20", duration: 1200, round: "Garage Games", exercises: ["10 Med Ball Cleans", "10 Pull-Ups", "40 Double Unders"] }
+            ],
+            'Tuesday Protocol': [
+                { type: 'work', name: 'Suitcase Hold (R)', round: '1/6', duration: 60 }, { type: 'rest', name: 'Rest', duration: 5 },
+                { type: 'work', name: 'Suitcase Hold (L)', round: '2/6', duration: 60 }, { type: 'rest', name: 'Rest', duration: 5 },
+                { type: 'rep_work', name: 'KB Flips (Pyramid)', exercises: ['10, 20, 30, 40, 50...'] }
+            ],
+            'Wednesday Protocol': [
+                { type: 'rep_work', name: 'Sprints', duration: 1200, exercises: ['The Afterburner Routine'] }
+            ],
+            'Thursday Protocol': [
+                { type: 'rep_work', name: 'Time Under Tension', duration: 600, exercises: ['Full Body Slow Tempo'] }
+            ],
+            'Friday Protocol': [
+                { type: 'work', name: 'Core Crusher', duration: 900 }
+            ],
+            'Saturday Protocol': [{ type: 'work', name: 'Outdoor Activity', duration: 1800 }],
+            'Sunday Protocol': [{ type: 'work', name: 'Mobility Flow', duration: 600 }]
+        };
+
+        // --- AUDIO ---
+        let audioCtx = null;
+        const initAudio = () => {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        };
+
+        const playBeep = (type) => {
+            if (!audioCtx) initAudio();
+            if (!audioCtx) return;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const freqs = { 'Low': 150, 'Mid': 400, 'High': 800 };
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.frequency.value = freqs[type];
+            osc.type = 'triangle';
+            
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        };
+
+        // --- STORAGE SERVICE ---
+        const KEYS = {
+            HISTORY: 'wolf_history',
+            ROUTINES: 'wolf_routines',
+            WEEK_MODE: 'wolf_week_mode',
+            PROTOCOL_CONFIG: 'wolf_protocol_config',
+            DAILY_PROGRESS: 'wolf_daily_progress',
+            DAILY_LOGGED_IDS: 'wolf_daily_logged_ids'
+        };
+
+        const defaultProtocolConfig = {
+            wakeUpRoutine: 'Wake Up',
+            morningRoutine: 'Morning Workout',
+            cooldownRoutine: 'Cooldown Flow',
+            missionRoutine: 'Garage Games',
+            missionLabel: 'Secondary Ops'
+        };
+
+        const getTodayKey = () => new Date().toLocaleDateString('en-CA');
+
+        const storageService = {
+            getHistory: () => {
+                try {
+                    const data = localStorage.getItem(KEYS.HISTORY);
+                    return data ? JSON.parse(data) : [];
+                } catch { return []; }
+            },
+            saveHistory: (history) => localStorage.setItem(KEYS.HISTORY, JSON.stringify(history)),
+            addLog: (log) => {
+                const history = storageService.getHistory();
+                history.unshift(log); 
+                storageService.saveHistory(history);
+                storageService.syncLog(log);
+            },
+            syncLog: async (log) => {
+                if (!GOOGLE_SCRIPT_URL) return;
+                try {
+                    await fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(log)
+                    });
+                } catch (e) { console.error(e); }
+            },
+            syncHistory: async () => {
+                if (!GOOGLE_SCRIPT_URL) return;
+                try {
+                    const response = await fetch(GOOGLE_SCRIPT_URL);
+                    const data = await response.json();
+                    if (data.history && Array.isArray(data.history)) {
+                        localStorage.setItem(KEYS.HISTORY, JSON.stringify(data.history.reverse()));
+                    }
+                } catch (e) { console.error(e); }
+            },
+            getRoutines: () => {
+                try {
+                    const data = localStorage.getItem(KEYS.ROUTINES);
+                    return data ? JSON.parse(data) : defaultRoutines;
+                } catch { return defaultRoutines; }
+            },
+            saveRoutines: (routines) => localStorage.setItem(KEYS.ROUTINES, JSON.stringify(routines)),
+            syncRoutines: async () => {
+                if (!GOOGLE_SCRIPT_URL) return;
+                try {
+                    const response = await fetch(GOOGLE_SCRIPT_URL);
+                    const data = await response.json();
+                    const routines = data.routines || data;
+                    if (routines) {
+                        const mappedRoutines = { ...defaultRoutines, ...routines };
+                        localStorage.setItem(KEYS.ROUTINES, JSON.stringify(mappedRoutines));
+                        return mappedRoutines;
+                    }
+                } catch (e) { console.error(e); }
+                return null;
+            },
+            getWeekMode: () => localStorage.getItem(KEYS.WEEK_MODE) || 'FAMILY',
+            saveWeekMode: (mode) => localStorage.setItem(KEYS.WEEK_MODE, mode),
+            getProtocolConfig: () => {
+                try {
+                    const data = localStorage.getItem(KEYS.PROTOCOL_CONFIG);
+                    return data ? { ...defaultProtocolConfig, ...JSON.parse(data) } : defaultProtocolConfig;
+                } catch { return defaultProtocolConfig; }
+            },
+            saveProtocolConfig: (config) => localStorage.setItem(KEYS.PROTOCOL_CONFIG, JSON.stringify(config)),
+            getDailyProgress: () => {
+                try {
+                    const raw = localStorage.getItem(KEYS.DAILY_PROGRESS);
+                    if (!raw) return [];
+                    const data = JSON.parse(raw);
+                    return data.date === getTodayKey() ? (data.items || []) : [];
+                } catch { return []; }
+            },
+            saveDailyProgress: (items) => localStorage.setItem(KEYS.DAILY_PROGRESS, JSON.stringify({ date: getTodayKey(), items })),
+            hasLoggedToday: (itemId) => {
+                try {
+                    const raw = localStorage.getItem(KEYS.DAILY_LOGGED_IDS);
+                    if (!raw) return false;
+                    const data = JSON.parse(raw);
+                    return data.date === getTodayKey() && (data.ids || []).includes(itemId);
+                } catch { return false; }
+            },
+            markLoggedToday: (itemId) => {
+                const today = getTodayKey();
+                let currentIds = [];
+                try {
+                    const raw = localStorage.getItem(KEYS.DAILY_LOGGED_IDS);
+                    const data = raw ? JSON.parse(raw) : {};
+                    if (data.date === today) currentIds = data.ids || [];
+                } catch {}
+                if (!currentIds.includes(itemId)) {
+                    currentIds.push(itemId);
+                    localStorage.setItem(KEYS.DAILY_LOGGED_IDS, JSON.stringify({ date: today, ids: currentIds }));
+                }
+            }
+        };
+
+        // --- COMPONENTS ---
+
+        const WorkoutSession = ({ routineName, routine, onExit }) => {
+            const [stepIndex, setStepIndex] = useState(-1);
+            const [timeLeft, setTimeLeft] = useState(10);
+            const [isPaused, setIsPaused] = useState(false);
+            const [totalTime, setTotalTime] = useState(0);
+            const [isComplete, setIsComplete] = useState(false);
+            const [manualRounds, setManualRounds] = useState(0);
+            const intervalRef = useRef(null);
+            const totalTimeRef = useRef(null);
+
+            useEffect(() => {
+                initAudio();
+                startTimer();
+                totalTimeRef.current = window.setInterval(() => {
+                    if (!isPaused && !isComplete) setTotalTime(t => t + 1);
+                }, 1000);
+                return () => {
+                    if (intervalRef.current) clearInterval(intervalRef.current);
+                    if (totalTimeRef.current) clearInterval(totalTimeRef.current);
+                };
+            }, [isComplete, isPaused]);
+
+            const activeStep = stepIndex >= 0 ? routine.steps[stepIndex] : null;
+            const nextStep = stepIndex + 1 < routine.steps.length ? routine.steps[stepIndex + 1] : null;
+
+            const startTimer = () => {
+                if (intervalRef.current) clearInterval(intervalRef.current);
+                intervalRef.current = window.setInterval(() => {
+                    if (isPaused) return;
+                    setTimeLeft(prev => {
+                        if (prev <= 1) { handleStepComplete(); return 0; }
+                        if (prev <= 4) playBeep('Low');
+                        return prev - 1;
+                    });
+                }, 1000);
+            };
+
+            const handleStepComplete = () => {
+                playBeep('High');
+                if (stepIndex + 1 >= routine.steps.length) {
+                    finishWorkout();
+                } else {
+                    const nextIdx = stepIndex + 1;
+                    setStepIndex(nextIdx);
+                    const nextStepData = routine.steps[nextIdx];
+                    if (nextStepData.type === 'rep_work' || (nextStepData.type === 'amrap' && !nextStepData.duration)) {
+                        if (intervalRef.current) clearInterval(intervalRef.current);
+                        setTimeLeft(0);
+                    } else {
+                        setTimeLeft(nextStepData.duration || 30);
+                        startTimer(); 
+                    }
+                }
+            };
+            const manualNext = () => handleStepComplete();
+            const finishWorkout = () => {
+                setIsComplete(true);
+                if (intervalRef.current) clearInterval(intervalRef.current);
+                if (totalTimeRef.current) clearInterval(totalTimeRef.current);
+                const log = {
+                    id: new Date().toISOString(),
+                    date: new Date().toISOString(),
+                    type: routineName,
+                    duration: formatTime(totalTime),
+                    details: {
+                        notes: manualRounds > 0 ? `${manualRounds} Rounds` : undefined,
+                        amount: manualRounds > 0 ? manualRounds.toString() : formatTime(totalTime),
+                        unit: manualRounds > 0 ? 'Rounds' : 'Time'
+                    }
+                };
+                storageService.addLog(log);
+            };
+            const formatTime = (s) => {
+                const min = Math.floor(s / 60).toString().padStart(2, '0');
+                const sec = (s % 60).toString().padStart(2, '0');
+                return `${min}:${sec}`;
+            };
+
+            if (isComplete) {
+                return (
+                    <div className="h-full flex flex-col items-center justify-center bg-wolf-bg p-6 text-center">
+                        <h1 className="font-heading text-6xl text-wolf-accent mb-2">COMPLETE</h1>
+                        <p className="text-wolf-muted uppercase tracking-widest mb-12">Well Done</p>
+                        <div className="bg-wolf-surface border border-wolf-border p-8 w-full max-w-sm mb-10 rounded-xl">
+                            <p className="text-wolf-muted text-[10px] uppercase tracking-widest mb-1">Total Time</p>
+                            <p className="text-6xl text-white font-heading">{formatTime(totalTime)}</p>
+                        </div>
+                        <button onClick={onExit} className="w-full max-w-sm bg-wolf-accent text-white font-heading uppercase py-4 rounded-lg tracking-widest">Return to Menu</button>
+                    </div>
+                );
+            }
+            return (
+                <div className="h-full flex flex-col bg-wolf-bg relative">
+                    <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-start z-20">
+                        <div>
+                            <span className="text-wolf-muted text-[10px] uppercase tracking-widest block">Elapsed</span>
+                            <span className="font-heading text-2xl text-wolf-text">{formatTime(totalTime)}</span>
+                        </div>
+                        <button onClick={onExit} className="text-wolf-muted hover:text-white text-xs font-bold uppercase tracking-widest border border-transparent hover:border-wolf-muted px-2 py-1 rounded">Exit</button>
+                    </div>
+                    <div className="flex-grow flex flex-col items-center justify-center p-4 z-10 w-full max-w-4xl mx-auto mt-10 text-center">
+                        <div className="w-full max-w-md bg-wolf-surface h-1.5 mb-12 rounded-full overflow-hidden">
+                            <div className="bg-wolf-accent h-full transition-all duration-300 rounded-full" style={{ width: `${((stepIndex + 1) / routine.steps.length) * 100}%` }}></div>
+                        </div>
+                        <p className="font-heading text-3xl text-wolf-accent uppercase tracking-widest mb-2 animate-pulse">{stepIndex === -1 ? 'GET READY' : activeStep?.type}</p>
+                        <h2 className="text-4xl md:text-7xl font-bold text-white mb-8 leading-none tracking-tight">
+                            {stepIndex === -1 ? 'PREPARE' : activeStep?.name}
+                            {activeStep?.round && <span className="block text-2xl text-wolf-muted mt-2">{activeStep.round}</span>}
+                        </h2>
+                        {activeStep?.exercises && (
+                            <div className="text-left text-lg font-medium mb-10 space-y-3 bg-wolf-surface p-6 rounded-xl border border-wolf-border w-full max-w-md">
+                                {activeStep.exercises.map((ex, i) => (
+                                    <div key={i} className="flex items-center"><span className="w-1.5 h-1.5 bg-wolf-accent mr-3 rounded-full"></span><span className="text-white">{ex}</span></div>
+                                ))}
+                            </div>
+                        )}
+                        {(stepIndex === -1 || (activeStep?.type !== 'rep_work' && activeStep?.type !== 'amrap') || (activeStep?.duration)) && (
+                            <div className="font-heading text-[8rem] md:text-[12rem] text-white leading-none tabular-nums select-none">{timeLeft > 59 ? formatTime(timeLeft) : timeLeft}</div>
+                        )}
+                        {(activeStep?.type === 'amrap') && (
+                            <div className="flex flex-col items-center mb-8">
+                                <div className="text-wolf-muted text-xs uppercase tracking-widest mb-2">Rounds Completed</div>
+                                <div className="flex items-center gap-6">
+                                    <button onClick={() => setManualRounds(r => Math.max(0, r-1))} className="text-wolf-muted text-4xl">-</button>
+                                    <span className="font-heading text-6xl text-white">{manualRounds}</span>
+                                    <button onClick={() => setManualRounds(r => r+1)} className="text-wolf-accent text-4xl">+</button>
+                                </div>
+                            </div>
+                        )}
+                        {(stepIndex === -1 || activeStep?.type === 'rep_work' || !activeStep?.duration) && (
+                            <button onClick={manualNext} className="bg-wolf-accent text-white font-heading uppercase text-xl px-12 py-4 rounded shadow-lg shadow-orange-900/20 mt-8">{stepIndex === -1 ? 'SKIP PREP' : 'COMPLETE'}</button>
+                        )}
+                    </div>
+                    <div className="p-6 pb-10 text-center z-20">
+                        <span className="text-wolf-muted text-[10px] uppercase tracking-widest block mb-1">Up Next</span>
+                        <span className="text-wolf-text text-xl font-heading uppercase">{nextStep ? nextStep.name : 'FINISH'}</span>
+                    </div>
+                </div>
+            );
+        };
+
+        const WorkoutList = ({ onStart, onBack }) => {
+            const [routines, setRoutines] = useState([]);
+            useEffect(() => {
+                const data = storageService.getRoutines();
+                const keys = Object.keys(data).filter(k => k !== 'apex_config' && !k.includes('Protocol'));
+                setRoutines(keys);
+            }, []);
+            return (
+                <div className="flex flex-col h-full bg-wolf-bg text-wolf-text">
+                    <div className="p-6 border-b border-wolf-border flex justify-between items-center bg-wolf-bg sticky top-0 z-10">
+                        <h2 className="font-heading text-2xl uppercase">Workouts</h2>
+                        <button onClick={onBack} className="text-xs font-bold uppercase text-wolf-muted px-3 py-1 border border-wolf-border rounded">Back</button>
+                    </div>
+                    <div className="flex-grow overflow-y-auto p-4 space-y-3 pb-20">
+                        {routines.map(name => (
+                            <button key={name} onClick={() => onStart(name)} className="w-full bg-wolf-surface border border-wolf-border p-4 rounded-lg flex justify-between items-center group active:scale-[0.98] transition-all">
+                                <span className="font-bold text-lg uppercase group-hover:text-wolf-accent transition-colors text-left">{name}</span>
+                                <ChevronRight className="text-wolf-muted group-hover:text-white" size={20} />
+                            </button>
+                        ))}
+                        {routines.length === 0 && <div className="text-center text-wolf-muted mt-10">Loading protocols...</div>}
+                    </div>
+                </div>
+            );
+        };
+
+        const HistoryList = ({ onBack }) => {
+            const [history, setHistory] = useState([]);
+            const [loading, setLoading] = useState(true);
+            useEffect(() => {
+                setHistory(storageService.getHistory());
+                setLoading(false);
+                storageService.syncHistory().then(() => setHistory(storageService.getHistory()));
+            }, []);
+            const formatDate = (isoStr) => {
+                try {
+                    return new Date(isoStr).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                } catch { return isoStr; }
+            };
+            return (
+                <div className="flex flex-col h-full bg-wolf-bg text-wolf-text">
+                    <div className="p-6 border-b border-wolf-border flex justify-between items-center bg-wolf-bg sticky top-0 z-10">
+                        <h2 className="font-heading text-2xl uppercase">History</h2>
+                        <button onClick={onBack} className="text-xs font-bold uppercase text-wolf-muted px-3 py-1 border border-wolf-border rounded">Back</button>
+                    </div>
+                    <div className="flex-grow overflow-y-auto p-4 space-y-3 pb-20">
+                        {history.map((log, idx) => (
+                            <div key={idx} className="bg-wolf-surface border-l-4 border-wolf-accent p-4 rounded-r shadow-sm">
+                                <div className="flex justify-between items-start mb-2">
+                                    <div>
+                                        <h3 className="font-bold text-white uppercase text-sm tracking-wide">{log.type}</h3>
+                                        <div className="flex items-center gap-1 text-wolf-muted text-[10px] uppercase mt-1"><Calendar size={10} /><span>{formatDate(log.date)}</span></div>
+                                    </div>
+                                    <div className="text-right"><div className="font-heading text-xl text-wolf-text">{log.duration}</div></div>
+                                </div>
+                                {(log.details?.notes || log.details?.weight) && (
+                                    <div className="mt-2 pt-2 border-t border-wolf-border/50 text-xs text-wolf-muted grid grid-cols-2 gap-2">
+                                        {log.details.weight && <div className="col-span-2 text-white font-bold flex items-center gap-1"><BarChart2 size={12} /> Weight: {log.details.weight} {log.details.unit}</div>}
+                                        {log.details.notes && <div className="col-span-2 italic text-gray-400">"{log.details.notes}"</div>}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                        {!loading && history.length === 0 && <div className="text-center text-wolf-muted mt-10 text-sm uppercase tracking-widest">No logs found.</div>}
+                    </div>
+                </div>
+            );
+        };
+
+        const Tools = () => {
+            const [activeTool, setActiveTool] = useState('STOPWATCH');
+            const [isRunning, setIsRunning] = useState(false);
+            const [isPrep, setIsPrep] = useState(false);
+            const [prepTime, setPrepTime] = useState(10);
+            const [tmInput, setTmInput] = useState({ h: 0, m: 0, s: 0 });
+            const [tmCurrent, setTmCurrent] = useState(0); 
+            const [tmRoundsCheck, setTmRoundsCheck] = useState(false);
+            const [tmRoundCount, setTmRoundCount] = useState(0);
+            const [swElapsed, setSwElapsed] = useState(0);
+            const [swLastLapTime, setSwLastLapTime] = useState(0);
+            const [laps, setLaps] = useState([]);
+            const [tbConfig, setTbConfig] = useState({ work: 20, rest: 10, rounds: 8 });
+            const [tbState, setTbState] = useState({ round: 1, isWork: false, timeLeft: 0 }); 
+            const [swCountdown, setSwCountdown] = useState(false);
+            const [tmCountdown, setTmCountdown] = useState(false);
+            const [tbCountdown, setTbCountdown] = useState(true);
+            const intervalRef = useRef(null);
+
+            useEffect(() => { return () => stopInterval(); }, []);
+            const stopInterval = () => { if (intervalRef.current) { window.clearInterval(intervalRef.current); intervalRef.current = null; } };
+
+            const handleStartStop = () => {
+                if (isRunning || isPrep) { stopInterval(); setIsRunning(false); setIsPrep(false); } 
+                else {
+                    if (activeTool === 'STOPWATCH') {
+                        if (swCountdown && swElapsed === 0) startPrep(() => startStopwatch());
+                        else startStopwatch();
+                    } else if (activeTool === 'TIMER') {
+                        let startVal = tmCurrent > 0 ? tmCurrent : (tmInput.h * 3600) + (tmInput.m * 60) + tmInput.s;
+                        if (startVal <= 0) return;
+                        if (tmCurrent <= 0) setTmCurrent(startVal);
+                        if (tmCountdown && tmCurrent <= 0) startPrep(() => startTimer(startVal));
+                        else startTimer(startVal);
+                    } else if (activeTool === 'TABATA') {
+                        const run = () => { setTbState({ round: 1, isWork: true, timeLeft: tbConfig.work }); startTabata(); };
+                        if (tbCountdown) startPrep(run); else run();
+                    }
+                }
+            };
+
+            const startPrep = (cb) => {
+                setIsPrep(true); setPrepTime(10);
+                intervalRef.current = window.setInterval(() => {
+                    setPrepTime(prev => {
+                        const next = prev - 1;
+                        if (next <= 3 && next > 0) playBeep('Low');
+                        if (next < 0) { stopInterval(); playBeep('High'); setIsPrep(false); setIsRunning(true); cb(); return 0; }
+                        return next;
+                    });
+                }, 1000);
+            };
+
+            const startStopwatch = () => {
+                setIsRunning(true); const start = Date.now() - swElapsed;
+                intervalRef.current = window.setInterval(() => setSwElapsed(Date.now() - start), 30);
+            };
+
+            const startTimer = (duration) => {
+                setIsRunning(true);
+                intervalRef.current = window.setInterval(() => {
+                    setTmCurrent(prev => {
+                        const next = prev - 1;
+                        if (next <= 3 && next > 0) playBeep('Low');
+                        if (next <= 0) { stopInterval(); playBeep('High'); setIsRunning(false); return 0; }
+                        return next;
+                    });
+                }, 1000);
+            };
+
+            const startTabata = () => {
+                setIsRunning(true);
+                intervalRef.current = window.setInterval(() => {
+                    setTbState(prev => {
+                        let nextTime = prev.timeLeft - 1;
+                        if (nextTime < 0) {
+                            if (prev.isWork) {
+                                playBeep('Mid');
+                                if (prev.round >= tbConfig.rounds) { stopInterval(); setIsRunning(false); alert("TABATA COMPLETE"); return prev; }
+                                return { ...prev, isWork: false, timeLeft: tbConfig.rest };
+                            } else {
+                                playBeep('High');
+                                return { round: prev.round + 1, isWork: true, timeLeft: tbConfig.work };
+                            }
+                        }
+                        if (nextTime <= 3) playBeep('Low');
+                        return { ...prev, timeLeft: nextTime };
+                    });
+                }, 1000);
+            };
+
+            const handleReset = () => {
+                stopInterval(); setIsRunning(false); setIsPrep(false);
+                if (activeTool === 'STOPWATCH') { setSwElapsed(0); setSwLastLapTime(0); setLaps([]); }
+                else if (activeTool === 'TIMER') { setTmCurrent(0); setTmRoundCount(0); }
+                else if (activeTool === 'TABATA') { setTbState({ round: 1, isWork: false, timeLeft: 0 }); }
+            };
+
+            const handleLap = () => {
+                if (activeTool === 'STOPWATCH' && isRunning) {
+                    const split = swElapsed - swLastLapTime;
+                    setLaps(prev => [{split, total: swElapsed}, ...prev]);
+                    setSwLastLapTime(swElapsed);
+                }
+            };
+
+            const formatMs = (ms) => {
+                const m = Math.floor(ms / 60000).toString().padStart(2, '0');
+                const s = Math.floor((ms % 60000) / 1000).toString().padStart(2, '0');
+                const ds = Math.floor((ms % 1000) / 100);
+                return `${m}:${s}.${ds}`;
+            };
+            const formatSec = (sec) => {
+                const h = Math.floor(sec / 3600);
+                const m = Math.floor((sec % 3600) / 60).toString().padStart(2, '0');
+                const s = (sec % 60).toString().padStart(2, '0');
+                return h > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
+            };
+
+            let mainDisplay = "";
+            if (isPrep) mainDisplay = formatSec(prepTime);
+            else if (activeTool === 'STOPWATCH') mainDisplay = formatMs(swElapsed);
+            else if (activeTool === 'TIMER') mainDisplay = formatSec(tmCurrent > 0 ? tmCurrent : (tmInput.h * 3600 + tmInput.m * 60 + tmInput.s));
+            else if (activeTool === 'TABATA') mainDisplay = isRunning ? formatSec(tbState.timeLeft) : formatSec(tbConfig.work);
+
+            return (
+                <div className="flex flex-col h-full bg-wolf-bg p-4 overflow-y-auto">
+                    <div className="flex gap-2 mb-6 shrink-0">
+                        {['STOPWATCH', 'TIMER', 'TABATA'].map(t => (
+                            <button key={t} onClick={() => { setActiveTool(t); handleReset(); }} className={`flex-1 py-3 text-[10px] font-bold tracking-widest uppercase rounded transition-colors ${activeTool === t ? 'bg-wolf-accent text-white' : 'bg-wolf-surface text-wolf-muted'}`}>{t}</button>
+                        ))}
+                    </div>
+                    <div className="flex-grow flex flex-col items-center pt-4">
+                        <div className={`font-heading text-2xl uppercase tracking-widest mb-2 animate-pulse ${isPrep ? 'text-wolf-accent' : 'hidden'}`}>GET READY</div>
+                        {activeTool === 'TABATA' && isRunning && !isPrep && <div className={`font-heading text-3xl uppercase tracking-widest mb-2 ${tbState.isWork ? 'text-wolf-accent' : 'text-green-500'}`}>{tbState.isWork ? 'WORK' : 'REST'}</div>}
+                        <div className={`font-heading text-white mb-6 tabular-nums leading-none ${activeTool === 'STOPWATCH' ? 'text-6xl md:text-8xl' : 'text-8xl md:text-9xl'}`}>{mainDisplay}</div>
+
+                        {activeTool === 'TIMER' && !isRunning && !isPrep && tmCurrent === 0 && (
+                            <div className="flex flex-col items-center animate-in fade-in">
+                                <div className="flex gap-4 items-center mb-8">
+                                    <div className="flex flex-col items-center"><label className="text-[10px] uppercase text-wolf-muted font-bold tracking-widest">Hours</label><input type="number" value={tmInput.h} onChange={e => setTmInput(p=>({...p, h: parseInt(e.target.value)||0}))} className="w-20 bg-transparent border-2 border-wolf-border rounded text-center text-4xl text-white p-2 focus:border-wolf-accent outline-none font-heading"/></div>
+                                    <span className="text-2xl text-wolf-muted mt-4">:</span>
+                                    <div className="flex flex-col items-center"><label className="text-[10px] uppercase text-wolf-muted font-bold tracking-widest">Mins</label><input type="number" value={tmInput.m} onChange={e => setTmInput(p=>({...p, m: parseInt(e.target.value)||0}))} className="w-20 bg-transparent border-2 border-wolf-border rounded text-center text-4xl text-white p-2 focus:border-wolf-accent outline-none font-heading"/></div>
+                                    <span className="text-2xl text-wolf-muted mt-4">:</span>
+                                    <div className="flex flex-col items-center"><label className="text-[10px] uppercase text-wolf-muted font-bold tracking-widest">Secs</label><input type="number" value={tmInput.s} onChange={e => setTmInput(p=>({...p, s: parseInt(e.target.value)||0}))} className="w-20 bg-transparent border-2 border-wolf-border rounded text-center text-4xl text-white p-2 focus:border-wolf-accent outline-none font-heading"/></div>
+                                </div>
+                                <div className="flex items-center gap-3 mb-6 bg-wolf-surface px-4 py-2 rounded-lg border border-wolf-border"><input type="checkbox" checked={tmRoundsCheck} onChange={e => setTmRoundsCheck(e.target.checked)} className="w-5 h-5 accent-wolf-accent cursor-pointer" /><label className="text-sm uppercase font-bold text-wolf-muted">Track Rounds</label></div>
+                            </div>
+                        )}
+                        {activeTool === 'TIMER' && tmRoundsCheck && (
+                            <div className="mb-6 flex flex-col items-center"><p className="text-wolf-muted uppercase text-[10px] tracking-widest mb-2">Round Counter</p><div className="flex items-center gap-6"><span className="font-heading text-5xl text-white">{tmRoundCount}</span><button onClick={() => setTmRoundCount(p => p + 1)} className="border border-wolf-accent text-wolf-accent hover:bg-wolf-accent hover:text-white px-4 py-2 rounded text-sm font-bold uppercase transition">+ Round</button></div></div>
+                        )}
+                        {activeTool === 'TABATA' && !isRunning && !isPrep && (
+                            <div className="w-full max-w-xs space-y-4 mb-8">
+                                {['work', 'rest', 'rounds'].map(field => (
+                                    <div key={field} className="flex justify-between items-center"><label className="text-wolf-muted uppercase text-sm font-bold">{field} {field !== 'rounds' ? '(Sec)' : ''}</label><input type="number" value={tbConfig[field]} onChange={e => setTbConfig(p => ({...p, [field]: parseInt(e.target.value)||0}))} className="bg-transparent border-2 border-wolf-border rounded text-center text-2xl text-white w-24 p-1 focus:border-wolf-accent outline-none font-heading"/></div>
+                                ))}
+                            </div>
+                        )}
+                        {activeTool === 'TABATA' && (isRunning || isPrep) && <p className="text-wolf-muted uppercase tracking-widest text-xl font-bold mb-8">Round {tbState.round} / {tbConfig.rounds}</p>}
+
+                        <div className="flex gap-4 w-full max-w-md mb-6">
+                            <button onClick={handleStartStop} className={`flex-1 py-4 rounded-lg flex items-center justify-center gap-2 font-heading text-xl uppercase tracking-wider shadow-lg ${isRunning || isPrep ? 'bg-red-900 text-white' : 'bg-wolf-accent text-white'}`}>{isRunning || isPrep ? (isPrep ? 'WAIT...' : 'STOP') : 'START'}</button>
+                            {activeTool === 'STOPWATCH' ? (
+                                <button onClick={handleLap} disabled={!isRunning || isPrep} className="flex-1 bg-wolf-surface border border-wolf-border text-wolf-muted hover:text-white rounded-lg flex items-center justify-center gap-2 font-heading text-xl uppercase tracking-wider disabled:opacity-50">LAP</button>
+                            ) : (
+                                <button onClick={handleReset} className="flex-1 bg-wolf-surface border border-wolf-border text-wolf-muted hover:text-white rounded-lg flex items-center justify-center gap-2 font-heading text-xl uppercase tracking-wider">RESET</button>
+                            )}
+                        </div>
+                        {activeTool === 'STOPWATCH' && <button onClick={handleReset} className="text-wolf-muted text-xs uppercase tracking-widest hover:text-white mb-6">Reset All</button>}
+                        <div className="flex items-center gap-2 mb-8">
+                            <input type="checkbox" id="cd-check" className="w-5 h-5 accent-wolf-accent cursor-pointer" checked={activeTool === 'STOPWATCH' ? swCountdown : (activeTool === 'TIMER' ? tmCountdown : tbCountdown)} onChange={(e) => { if(activeTool === 'STOPWATCH') setSwCountdown(e.target.checked); else if(activeTool === 'TIMER') setTmCountdown(e.target.checked); else setTbCountdown(e.target.checked); }} />
+                            <label htmlFor="cd-check" className="text-xs uppercase text-wolf-muted font-bold cursor-pointer">10 Sec Countdown</label>
+                        </div>
+                        {activeTool === 'STOPWATCH' && laps.length > 0 && (
+                            <div className="w-full max-w-md h-40 overflow-y-auto bg-wolf-surface border border-wolf-border rounded-lg p-2 text-sm space-y-1">
+                                {laps.map((l, i) => (
+                                    <div key={i} className="flex justify-between border-b border-wolf-border/50 py-2 px-2"><span className="text-wolf-muted font-bold">Lap {laps.length - i}</span><span className="text-white font-mono">{formatMs(l.split)} / {formatMs(l.total)}</span></div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const MainMenu = ({ weekMode, toggleWeekMode, navigate }) => {
+            return (
+                <div className="h-full flex flex-col items-center justify-center p-6 relative bg-wolf-bg">
+                    <div className="z-10 text-center w-full max-w-sm flex flex-col items-center mb-10">
+                        <h1 className="font-heading text-6xl text-wolf-text tracking-tight mb-2">WOLF<span className="text-wolf-accent">ALPHA</span></h1>
+                        <p className="text-wolf-muted text-sm uppercase tracking-[0.3em]">Conquer Your Day</p>
+                    </div>
+                    <div className="flex items-center gap-4 mb-8 bg-wolf-surface p-2 rounded-full border border-wolf-border cursor-pointer" onClick={toggleWeekMode}>
+                        <span className={`text-xs font-bold uppercase tracking-wider transition-colors ${weekMode === 'FAMILY' ? 'text-white' : 'text-wolf-muted'}`}>Family</span>
+                        <div className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 relative ${weekMode === 'FOCUS' ? 'bg-wolf-accent' : 'bg-stone-600'}`}><div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 absolute top-1 ${weekMode === 'FOCUS' ? 'left-7' : 'left-1'}`}></div></div>
+                        <span className={`text-xs font-bold uppercase tracking-wider transition-colors ${weekMode === 'FOCUS' ? 'text-white' : 'text-wolf-muted'}`}>Focus</span>
+                    </div>
+                    <button onClick={() => navigate('DAILY')} className="w-full max-w-sm bg-wolf-accent text-white font-heading uppercase text-2xl py-6 rounded-lg shadow-lg shadow-orange-900/20 mb-6 flex items-center justify-center gap-3 transform active:scale-95 transition-all"><CheckSquare size={28} /> Daily Protocol</button>
+                    <div className="w-full max-w-sm space-y-3">
+                        <button onClick={() => navigate('LIST')} className="w-full bg-wolf-surface text-wolf-text border border-wolf-border font-heading uppercase text-lg py-4 rounded-lg hover:border-wolf-accent transition-colors flex items-center justify-center gap-2"><List size={20} /> Workouts</button>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button onClick={() => navigate('TOOLS')} className="bg-wolf-surface text-wolf-muted hover:text-white border border-wolf-border py-4 rounded-lg flex flex-col items-center gap-1 uppercase text-xs font-bold tracking-widest"><Clock size={20} /> Tools</button>
+                            <button onClick={() => navigate('HISTORY')} className="bg-wolf-surface text-wolf-muted hover:text-white border border-wolf-border py-4 rounded-lg flex flex-col items-center gap-1 uppercase text-xs font-bold tracking-widest"><BarChart2 size={20} /> History</button>
+                        </div>
+                    </div>
+                    <div className="mt-8 text-[10px] text-wolf-muted uppercase tracking-widest opacity-50">System Active // v2.1</div>
+                </div>
+            );
+        };
+
+        const DailyProtocol = ({ weekMode, availableRoutines, onStartRoutine, onExit }) => {
+            const [day] = useState(new Date().getDay()); 
+            const [completedItems, setCompletedItems] = useState([]);
+            const [config, setConfig] = useState(storageService.getProtocolConfig());
+            const [showConfigModal, setShowConfigModal] = useState(false);
+            const [opsStats, setOpsStats] = useState({ pushups: '', squats: '', burpees: '', climbers: '' });
+            const [weight, setWeight] = useState('');
+            const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+            const currentDayName = days[day];
+            const isWeekend = day === 0 || day === 6;
+            const isMonOrFri = day === 1 || day === 5; 
+            const isReveilleDay = (weekMode === 'FAMILY' && day >= 1 && day <= 4) || (weekMode === 'FOCUS' && day === 5);
+
+            useEffect(() => { setCompletedItems(storageService.getDailyProgress()); }, []);
+
+            const toggleItem = (id, logLabel, note) => {
+                let newItems;
+                if (completedItems.includes(id)) { newItems = completedItems.filter(item => item !== id); } 
+                else {
+                    newItems = [...completedItems, id];
+                    if (!storageService.hasLoggedToday(id)) {
+                        storageService.addLog({ id: new Date().toISOString(), date: new Date().toISOString(), type: logLabel, duration: '---', details: { notes: note } });
+                        storageService.markLoggedToday(id);
+                    }
+                }
+                setCompletedItems(newItems); storageService.saveDailyProgress(newItems);
+            };
+
+            const handleMorningWorkoutCheck = () => {
+                const stats = `Push: ${opsStats.pushups || 0}, Sq: ${opsStats.squats || 0}, Burp: ${opsStats.burpees || 0}, Mtn: ${opsStats.climbers || 0}`;
+                toggleItem('morning_workout_check', `Morning Ops (${currentDayName})`, stats);
+            };
+            const handleWeightLog = () => {
+                if (!weight) return;
+                if (!completedItems.includes('weight_log')) {
+                    const newItems = [...completedItems, 'weight_log'];
+                    setCompletedItems(newItems); storageService.saveDailyProgress(newItems);
+                    if (!storageService.hasLoggedToday('weight_log')) {
+                        storageService.addLog({ id: new Date().toISOString(), date: new Date().toISOString(), type: "Weight Check-In", duration: '---', details: { weight: weight, unit: 'lbs' } });
+                        storageService.markLoggedToday('weight_log');
+                    }
+                }
+            };
+            const saveConfig = (newConfig) => { setConfig(newConfig); storageService.saveProtocolConfig(newConfig); };
+
+            return (
+                <div className="flex flex-col h-full bg-wolf-bg text-wolf-text overflow-y-auto no-scrollbar relative">
+                    <div className="p-6 border-b-4 border-black bg-wolf-bg sticky top-0 z-10">
+                        <div className="flex justify-between items-end mb-2">
+                            <div><div className="text-[10px] font-bold tracking-[0.2em] text-wolf-muted uppercase mb-1">PACK OPS // {weekMode}</div><h1 className="font-heading text-4xl leading-none uppercase">{currentDayName}</h1></div>
+                            <div className="flex gap-2"><button onClick={() => setShowConfigModal(true)} className="p-2 border border-wolf-border rounded hover:bg-wolf-surface text-wolf-muted"><Settings size={16} /></button><button onClick={onExit} className="text-xs font-bold uppercase tracking-widest border border-wolf-border px-3 py-1 rounded hover:bg-wolf-surface">Close</button></div>
+                        </div>
+                    </div>
+                    <div className="p-6 space-y-6 pb-20">
+                        <Section title={isWeekend ? "RISE & PRIME" : "// RISE & PRIME //"}>
+                            <TaskRow id="wake_water" label="Wake / 10oz Water" isDone={completedItems.includes('wake_water')} onCheck={() => toggleItem('wake_water', 'Wake Up')} />
+                            <TaskRow id="make_bed" label="Make Bed" isDone={completedItems.includes('make_bed')} onCheck={() => toggleItem('make_bed', 'Make Bed')} />
+                            <TaskRow id="teeth" label="Teeth / Bathroom" isDone={completedItems.includes('teeth')} onCheck={() => toggleItem('teeth', 'Hygiene')} />
+                        </Section>
+                        <Section title={isWeekend ? "MORNING OPS" : "// WORKOUT //"}>
+                            <TaskRow id="stretch" label="Wake Up Stretches" isDone={completedItems.includes('stretch')} onCheck={() => toggleItem('stretch', 'Stretches')} goAction={() => onStartRoutine(config.wakeUpRoutine)} />
+                            <div className="py-2 border-b border-wolf-border border-dashed">
+                                <div className="flex justify-between items-center mb-2">
+                                    <div className="flex items-center gap-3"><CheckBox checked={completedItems.includes('morning_workout_check')} onChange={handleMorningWorkoutCheck} /><span className="font-bold text-sm uppercase">Morning Workout</span></div>
+                                    <button onClick={() => onStartRoutine(config.morningRoutine)} className="bg-wolf-accent text-white text-[10px] font-bold px-3 py-1 rounded flex items-center gap-1 uppercase tracking-wider">GO <ChevronRight size={10} /></button>
+                                </div>
+                                <div className="grid grid-cols-4 gap-2 ml-7 mt-2">
+                                    {['Push', 'Squat', 'Burp', 'Climb'].map((lbl, i) => {
+                                        const keys = ['pushups', 'squats', 'burpees', 'climbers'];
+                                        return (
+                                            <div key={lbl} className="flex flex-col"><span className="text-[8px] uppercase text-wolf-muted mb-1">{lbl}</span><input type="number" className="bg-wolf-surface border-b border-wolf-border text-center text-xs p-1 outline-none focus:border-wolf-accent text-white" value={opsStats[keys[i]]} onChange={(e) => setOpsStats(p => ({...p, [keys[i]]: e.target.value}))} /></div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                            <TaskRow id="cool" label="Cooldown Flow" isDone={completedItems.includes('cool')} onCheck={() => toggleItem('cool', 'Cooldown')} goAction={() => onStartRoutine(config.cooldownRoutine)} />
+                        </Section>
+                        {day === 6 && (
+                             <Section title="HOME OPS" bg="bg-stone-900">
+                                <TaskRow id="fam_time" label="Family Time" isDone={completedItems.includes('fam_time')} onCheck={() => toggleItem('fam_time', 'Family Time')} />
+                                <TaskRow id="house_proj" label="House Projects" isDone={completedItems.includes('house_proj')} onCheck={() => toggleItem('house_proj', 'Projects')} />
+                                <TaskRow id="recov" label="Relax / Recovery" isDone={completedItems.includes('recov')} onCheck={() => toggleItem('recov', 'Recovery')} />
+                             </Section>
+                        )}
+                        {day === 0 && (
+                             <Section title="THE LORD'S DAY" bg="bg-amber-900/20">
+                                <TaskRow id="dress" label="Get Dressed" isDone={completedItems.includes('dress')} onCheck={() => toggleItem('dress', 'Dressed')} />
+                                <TaskRow id="pack" label="Pack Bags/Bible" isDone={completedItems.includes('pack')} onCheck={() => toggleItem('pack', 'Packed')} />
+                                <TaskRow id="service" label="Attend Service" isDone={completedItems.includes('service')} onCheck={() => toggleItem('service', 'Church')} />
+                             </Section>
+                        )}
+                        {!isWeekend && (
+                            <Section title="DEPLOYMENT PREP">
+                                 <TaskRow id="dress_wk" label="Get Dressed" isDone={completedItems.includes('dress_wk')} onCheck={() => toggleItem('dress_wk', 'Dressed')} />
+                                 <TaskRow id="hair" label="Do Hair" isDone={completedItems.includes('hair')} onCheck={() => toggleItem('hair', 'Hair')} />
+                                 <TaskRow id="devo" label="Devotional" isDone={completedItems.includes('devo')} onCheck={() => toggleItem('devo', 'Devotional')} />
+                            </Section>
+                        )}
+                        {!isWeekend && weekMode === 'FOCUS' && (
+                            <Section title="MISSION // PROTOCOL" bg="bg-stone-900">
+                                 <div className="py-2 border-b border-wolf-border border-dashed">
+                                     <div className="flex justify-between items-center">
+                                         <div className="flex items-center gap-3"><CheckBox checked={completedItems.includes('mission_chk')} onChange={() => toggleItem('mission_chk', config.missionLabel)} /><div><span className="font-bold text-sm uppercase block">{config.missionLabel}</span><span className="text-[10px] text-wolf-muted uppercase">Linked: {config.missionRoutine}</span></div></div>
+                                         <button onClick={() => onStartRoutine(config.missionRoutine)} className="bg-wolf-accent text-white text-[10px] font-bold px-3 py-1 rounded flex items-center gap-1 uppercase tracking-wider">GO <ChevronRight size={10} /></button>
+                                     </div>
+                                 </div>
+                            </Section>
+                        )}
+                        {isReveilleDay && (
+                            <Section title="// REVEILLE //">
+                                <div className="flex items-center gap-3 py-2"><CheckBox checked={completedItems.includes('wake_kids')} onChange={() => toggleItem('wake_kids', 'Wake Kids')} /><span className="font-bold text-sm uppercase text-red-500 tracking-wider">WAKE UP KIDS</span></div>
+                            </Section>
+                        )}
+                        {isMonOrFri && (
+                            <Section title="PHYSICAL CHECK">
+                                <div className="flex justify-between items-center py-2">
+                                     <div className="flex items-center gap-2"><Scale size={16} className="text-wolf-muted" /><span className="font-bold text-sm uppercase">Weight</span></div>
+                                     <div className="flex items-center gap-2"><input type="number" placeholder="000.0" className="bg-wolf-bg border-b border-wolf-muted w-20 text-center text-white focus:border-wolf-accent outline-none" value={weight} onChange={(e) => setWeight(e.target.value)} /><button onClick={handleWeightLog} disabled={completedItems.includes('weight_log')} className="text-xs uppercase font-bold text-wolf-accent disabled:opacity-50">{completedItems.includes('weight_log') ? 'SAVED' : 'LOG'}</button></div>
+                                </div>
+                            </Section>
+                        )}
+                    </div>
+                    {showConfigModal && (
+                        <div className="absolute inset-0 z-50 bg-black/90 flex items-center justify-center p-6 backdrop-blur-sm">
+                            <div className="bg-wolf-surface border border-wolf-border p-6 w-full max-w-sm rounded-xl shadow-2xl max-h-[90vh] overflow-y-auto">
+                                <div className="flex justify-between items-center mb-6"><h2 className="font-heading text-2xl text-wolf-text">CONFIGURE</h2><button onClick={() => setShowConfigModal(false)}><X className="text-wolf-muted" /></button></div>
+                                <div className="space-y-6">
+                                    <div className="space-y-4">
+                                        <div><label className="block text-[10px] uppercase text-wolf-muted font-bold mb-1">Wake Up Routine</label><select value={config.wakeUpRoutine} onChange={(e) => saveConfig({...config, wakeUpRoutine: e.target.value})} className="w-full bg-wolf-bg border border-wolf-border text-white p-2 rounded text-sm outline-none">{availableRoutines.map(r => <option key={r} value={r}>{r}</option>)}</select></div>
+                                        <div><label className="block text-[10px] uppercase text-wolf-muted font-bold mb-1">Morning Workout Routine</label><select value={config.morningRoutine} onChange={(e) => saveConfig({...config, morningRoutine: e.target.value})} className="w-full bg-wolf-bg border border-wolf-border text-white p-2 rounded text-sm outline-none">{availableRoutines.map(r => <option key={r} value={r}>{r}</option>)}</select></div>
+                                        <div><label className="block text-[10px] uppercase text-wolf-muted font-bold mb-1">Cooldown Routine</label><select value={config.cooldownRoutine} onChange={(e) => saveConfig({...config, cooldownRoutine: e.target.value})} className="w-full bg-wolf-bg border border-wolf-border text-white p-2 rounded text-sm outline-none">{availableRoutines.map(r => <option key={r} value={r}>{r}</option>)}</select></div>
+                                    </div>
+                                    <div className="border-t border-wolf-border pt-4">
+                                        <label className="block text-[10px] uppercase text-wolf-accent font-bold mb-2">Mission Protocol (Focus Only)</label>
+                                        <label className="block text-[10px] uppercase text-wolf-muted font-bold mb-1">Display Label</label><input type="text" value={config.missionLabel} onChange={(e) => saveConfig({...config, missionLabel: e.target.value})} className="w-full bg-wolf-bg border border-wolf-border text-white p-2 rounded text-sm outline-none mb-3" />
+                                        <label className="block text-[10px] uppercase text-wolf-muted font-bold mb-1">Linked Routine</label><select value={config.missionRoutine} onChange={(e) => saveConfig({...config, missionRoutine: e.target.value})} className="w-full bg-wolf-bg border border-wolf-border text-white p-2 rounded text-sm outline-none">{availableRoutines.map(r => <option key={r} value={r}>{r}</option>)}</select>
+                                    </div>
+                                </div>
+                                <button onClick={() => setShowConfigModal(false)} className="w-full bg-wolf-accent text-white font-bold uppercase py-3 rounded mt-6">Done</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const Section = ({title, children, bg}) => (
+            <div className={`border border-black flex flex-col ${bg || 'bg-transparent'}`}>
+                <div className="bg-stone-200 text-black px-2 py-1 border-b-2 border-black"><h3 className="font-heading font-bold text-sm">{title}</h3></div>
+                <div className="p-3 bg-white/5">{children}</div>
+            </div>
+        );
+        const TaskRow = ({ label, isDone, onCheck, goAction }) => (
+            <div className="py-2 border-b border-wolf-border border-dashed flex justify-between items-center">
+                <div className="flex items-center gap-3"><CheckBox checked={isDone} onChange={onCheck} /><span className={`font-bold text-sm uppercase ${isDone ? 'line-through text-wolf-muted' : ''}`}>{label}</span></div>
+                {goAction && <button onClick={goAction} className="bg-wolf-accent text-white text-[10px] font-bold px-3 py-1 rounded flex items-center gap-1 uppercase tracking-wider">GO <ChevronRight size={10} /></button>}
+            </div>
+        );
+        const CheckBox = ({checked, onChange}) => (
+            <div onClick={onChange} className={`w-4 h-4 border-2 border-wolf-text cursor-pointer flex items-center justify-center bg-white ${checked ? 'bg-wolf-accent border-wolf-accent' : ''}`}>{checked && <Check size={12} className="text-white" />}</div>
+        );
+
+        const App = () => {
+            const [screen, setScreen] = useState('MENU');
+            const [weekMode, setWeekMode] = useState('FAMILY');
+            const [activeRoutine, setActiveRoutine] = useState(null);
+
+            useEffect(() => {
+                setWeekMode(storageService.getWeekMode());
+                const initSync = async () => { await storageService.syncRoutines(); await storageService.syncHistory(); };
+                initSync();
+            }, []);
+
+            const toggleWeekMode = () => { const newMode = weekMode === 'FAMILY' ? 'FOCUS' : 'FAMILY'; setWeekMode(newMode); storageService.saveWeekMode(newMode); };
+            const startRoutine = (routineName) => {
+                const allRoutines = storageService.getRoutines();
+                const rData = allRoutines[routineName] || defaultRoutines[routineName];
+                if (rData) {
+                    const routineObj = Array.isArray(rData) ? { steps: rData } : rData;
+                    setActiveRoutine({ name: routineName, data: routineObj });
+                    setScreen('WORKOUT');
+                } else {
+                    alert(`Protocol "${routineName}" not found. Syncing data...`);
+                    storageService.syncRoutines().then(() => alert("Please try again."));
+                }
+            };
+
+            return (
+                <div className="h-screen w-full overflow-hidden bg-wolf-bg text-wolf-text font-body">
+                    {screen === 'MENU' && <MainMenu weekMode={weekMode} toggleWeekMode={toggleWeekMode} navigate={setScreen} />}
+                    {screen === 'DAILY' && <DailyProtocol weekMode={weekMode} availableRoutines={Object.keys(storageService.getRoutines())} onStartRoutine={startRoutine} onExit={() => setScreen('MENU')} />}
+                    {screen === 'WORKOUT' && activeRoutine && <WorkoutSession routineName={activeRoutine.name} routine={activeRoutine.data} onExit={() => setScreen('MENU')} />}
+                    {screen === 'LIST' && <WorkoutList onStart={startRoutine} onBack={() => setScreen('MENU')} />}
+                    {screen === 'HISTORY' && <HistoryList onBack={() => setScreen('MENU')} />}
+                    {screen === 'TOOLS' && <div className="h-full flex flex-col"><div className="p-4 border-b border-wolf-border flex justify-between items-center bg-wolf-bg"><h2 className="font-heading text-2xl">TOOLS</h2><button onClick={() => setScreen('MENU')} className="text-xs font-bold uppercase text-wolf-muted border border-wolf-border px-2 py-1 rounded">Exit</button></div><Tools /></div>}
+                    {screen === 'EDITOR' && <div className="h-full flex flex-col items-center justify-center p-6 text-center"><p className="text-wolf-muted uppercase mb-4">Use Google Sheets to Edit Protocols</p><button onClick={() => setScreen('MENU')} className="px-4 py-2 border border-wolf-border rounded text-sm uppercase">Back</button></div>}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
